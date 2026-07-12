@@ -1,0 +1,10 @@
+{
+  "name": "herdr-rich-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "bun src/server.ts",
+    "test": "bun test"
+  }
+}

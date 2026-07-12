@@ -1,0 +1,29 @@
+id = "herdr-rich-preview"
+name = "Rich Preview"
+version = "0.1.0"
+min_herdr_version = "0.7.0"
+description = "Browser-based rich preview of the files an agent touched in this session: rendered markdown, mermaid, D2, styled HTML, SVG, and images. Works locally and over herdr --remote (SSH) via a tunnel-friendly fixed port."
+platforms = ["macos", "linux"]
+
+[[actions]]
+id = "open-preview"
+title = "Rich preview: touched files"
+contexts = ["pane", "workspace"]
+command = ["bun", "src/open-preview.ts"]
+
+[[actions]]
+id = "preview-file"
+title = "Rich preview: this file"
+contexts = ["pane"]
+command = ["bun", "src/preview-file.ts"]
+
+[[actions]]
+id = "stop-server"
+title = "Rich preview: stop server"
+command = ["bun", "src/open-preview.ts", "--stop"]
+
+[[link_handlers]]
+id = "preview-touched-file"
+title = "Open in rich preview"
+pattern = "file://.*\\.(md|markdown|mdx|mmd|mermaid|d2|html?|svg)$"
+action = "preview-file"
