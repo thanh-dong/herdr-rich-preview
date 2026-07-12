@@ -22,6 +22,12 @@ id = "stop-server"
 title = "Rich preview: stop server"
 command = ["bun", "src/open-preview.ts", "--stop"]
 
+[[panes]]
+id = "preview-pane"
+title = "Rich preview (terminal)"
+placement = "split"
+command = ["bun", "src/pane.ts"]
+
 [[link_handlers]]
 id = "preview-touched-file"
 title = "Open in rich preview"

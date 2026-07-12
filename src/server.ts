@@ -10,6 +10,7 @@ import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs"
 import { join, normalize, resolve } from "node:path"
 import { IMAGE_MIME_BY_EXTENSION, inferPreviewRenderer } from "./preview-renderer"
 import { loadConfig, loadToken, pidFile, stateDir } from "./context"
+import { git, touchedFiles } from "./git"
 
 const config = loadConfig()
 const token = loadToken()
@@ -38,39 +39,6 @@ function json(body: unknown, status = 200): Response {
   })
 }
 
-function git(root: string, args: string[]): { ok: boolean; out: string } {
-  const proc = Bun.spawnSync(["git", "-C", root, ...args])
-  return { ok: proc.exitCode === 0, out: proc.stdout.toString() }
-}
-
-/** Modified + untracked + staged files, plus files changed vs the branch merge-base. */
-function touchedFiles(root: string): { path: string; status: string }[] {
-  const seen = new Map<string, string>()
-  const status = git(root, ["status", "--porcelain", "-uall"])
-  if (status.ok) {
-    for (const line of status.out.split("\n")) {
-      if (!line.trim()) continue
-      const flag = line.slice(0, 2).trim() || "M"
-      // Rename lines are "R  old -> new"; keep the new path.
-      const path = (line.slice(3).split(" -> ").pop() ?? "").trim()
-      if (path) seen.set(path, flag)
-    }
-  }
-  const base = git(root, ["merge-base", "HEAD", "origin/HEAD"])
-  if (base.ok) {
-    const diff = git(root, ["diff", "--name-status", base.out.trim(), "HEAD"])
-    if (diff.ok) {
-      for (const line of diff.out.split("\n")) {
-        const [flag, ...rest] = line.split("\t")
-        const path = rest.pop()
-        if (path && !seen.has(path)) seen.set(path, flag?.[0] ?? "M")
-      }
-    }
-  }
-  return [...seen.entries()]
-    .map(([path, status]) => ({ path, status }))
-    .sort((a, b) => a.path.localeCompare(b.path))
-}
 
 /** Resolve a request path inside a registered root; null if it escapes. */
 function safeResolve(root: string, relPath: string): string | null {

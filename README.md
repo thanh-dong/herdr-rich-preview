@@ -30,6 +30,26 @@ command = "herdr plugin action invoke open-preview --plugin herdr-rich-preview"
 - **`preview-file`** — link handler: Ctrl+click a `file://…​.md|.mmd|.d2|.html|.svg` URL in any pane to jump straight to that file's preview.
 - **`stop-server`** — stops the background server.
 
+### Pane mode (in-terminal preview)
+
+For quick glances without leaving the terminal — or from SSH clients with no easy tunnel (mobile apps, etc.) — open the TUI pane:
+
+```bash
+herdr plugin pane open --plugin herdr-rich-preview --entrypoint preview-pane
+```
+
+It lists the session's touched files (`j`/`k`, `enter`, `r` refresh, `q` quit) and renders each in-terminal, best-effort:
+
+| Format | Renderer | Install |
+|---|---|---|
+| Markdown | `glow` (styled) | `brew install glow` |
+| Mermaid `.mmd` | `mmdc` → SVG → `chafa` ANSI art | `npm i -g @mermaid-js/mermaid-cli; brew install chafa` |
+| D2 | `d2` → SVG → `chafa` ANSI art | `brew install d2 chafa` |
+| SVG / images | `chafa` ANSI art | `brew install chafa` |
+| HTML | no terminal path — shows the browser URL | — |
+
+Missing tools degrade to plain source with an install hint. Every view shows the full-fidelity browser URL for the same file, so the pane doubles as a launcher.
+
 ## SSH / `herdr --remote`
 
 The plugin (and its server) run on the **remote** host; your browser is local. `open-preview` detects the SSH session and:
