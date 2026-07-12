@@ -80,11 +80,15 @@ function safeResolve(root: string, relPath: string): string | null {
 }
 
 function renderD2(source: string): { ok: boolean; svg?: string; error?: string } {
-  const proc = Bun.spawnSync(["d2", "-", "-"], { stdin: Buffer.from(source) })
-  if (proc.exitCode !== 0) {
-    return { ok: false, error: proc.stderr.toString().trim() || "d2 CLI not available" }
+  try {
+    const proc = Bun.spawnSync(["d2", "-", "-"], { stdin: Buffer.from(source) })
+    if (proc.exitCode !== 0) {
+      return { ok: false, error: proc.stderr.toString().trim() || "d2 render failed" }
+    }
+    return { ok: true, svg: proc.stdout.toString() }
+  } catch {
+    return { ok: false, error: "d2 CLI not installed on the herdr host" }
   }
-  return { ok: true, svg: proc.stdout.toString() }
 }
 
 const server = Bun.serve({
