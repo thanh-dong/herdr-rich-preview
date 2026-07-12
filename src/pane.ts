@@ -21,11 +21,19 @@ const token = loadToken()
 const cols = () => process.stdout.columns ?? 80
 const rows = () => process.stdout.rows ?? 24
 
-const has = (tool: string) => Bun.which(tool) !== null
+// Herdr spawns pane processes without the user's shell profile, so Homebrew
+// and npm-global bins are often missing from PATH. Extend it explicitly.
+const EXTRA_PATHS = ["/opt/homebrew/bin", "/usr/local/bin", `${process.env.HOME}/.bun/bin`, `${process.env.HOME}/.local/bin`]
+const PATH = [...new Set([...(process.env.PATH ?? "").split(":"), ...EXTRA_PATHS])].join(":")
+
+const has = (tool: string) => Bun.which(tool, { PATH }) !== null
 
 function run(cmd: string[], stdin?: string): { ok: boolean; out: string; err: string } {
   try {
-    const proc = Bun.spawnSync(cmd, stdin ? { stdin: Buffer.from(stdin) } : {})
+    const proc = Bun.spawnSync(cmd, {
+      env: { ...process.env, PATH },
+      ...(stdin ? { stdin: Buffer.from(stdin) } : {}),
+    })
     return { ok: proc.exitCode === 0, out: proc.stdout.toString(), err: proc.stderr.toString() }
   } catch {
     return { ok: false, out: "", err: `${cmd[0]} not installed` }
