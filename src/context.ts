@@ -4,11 +4,15 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 export interface HerdrContext {
-  worktree?: { path?: string }
-  workspace?: { path?: string; id?: string }
-  pane?: { id?: string; cwd?: string }
-  agent?: Record<string, unknown>
+  // Herdr passes a flat context object (see plugin_action_invoked payloads).
+  worktree_path?: string
+  focused_pane_cwd?: string
+  workspace_cwd?: string
   clicked_url?: string
+  // Tolerate a nested shape too, in case future versions structure it.
+  worktree?: { path?: string }
+  workspace?: { path?: string }
+  pane?: { cwd?: string }
 }
 
 export interface PluginConfig {
@@ -20,7 +24,7 @@ export interface PluginConfig {
   advertiseHost?: string
 }
 
-const DEFAULT_CONFIG: PluginConfig = { port: 7777, bind: "127.0.0.1" }
+const DEFAULT_CONFIG: PluginConfig = { port: 7719, bind: "127.0.0.1" }
 
 export function readContext(): HerdrContext {
   const raw = process.env.HERDR_PLUGIN_CONTEXT_JSON
@@ -69,7 +73,14 @@ export function pidFile(): string {
 
 /** Resolve the worktree root for this invocation: herdr context, then git, then cwd. */
 export function resolveRoot(ctx: HerdrContext): string {
-  const candidate = ctx.worktree?.path ?? ctx.pane?.cwd ?? ctx.workspace?.path ?? process.cwd()
+  const candidate =
+    ctx.worktree_path ??
+    ctx.focused_pane_cwd ??
+    ctx.workspace_cwd ??
+    ctx.worktree?.path ??
+    ctx.pane?.cwd ??
+    ctx.workspace?.path ??
+    process.cwd()
   const git = Bun.spawnSync(["git", "-C", candidate, "rev-parse", "--show-toplevel"])
   if (git.exitCode === 0) return git.stdout.toString().trim()
   return candidate

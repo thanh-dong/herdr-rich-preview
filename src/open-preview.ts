@@ -12,6 +12,7 @@ import {
   readContext,
   resolveRoot,
   serverAlive,
+  stateDir,
 } from "./context"
 
 const config = loadConfig()
@@ -36,8 +37,10 @@ async function stopServer() {
 async function ensureServer(): Promise<void> {
   if (await serverAlive(config.port, token)) return
   const serverScript = join(import.meta.dir, "server.ts")
+  const logPath = join(stateDir(), "server.log")
+  const logFile = Bun.file(logPath)
   const proc = Bun.spawn(["bun", serverScript], {
-    stdio: ["ignore", "ignore", "ignore"],
+    stdio: ["ignore", logFile, logFile],
     env: { ...process.env },
   })
   proc.unref()
@@ -45,7 +48,11 @@ async function ensureServer(): Promise<void> {
     if (await serverAlive(config.port, token)) return
     await Bun.sleep(250)
   }
-  throw new Error(`rich-preview server failed to start on port ${config.port}`)
+  const tail = existsSync(logPath) ? readFileSync(logPath, "utf8").split("\n").slice(-8).join("\n") : ""
+  throw new Error(
+    `rich-preview server failed to start on port ${config.port}.` +
+      ` If the port is taken, set another in config.json (herdr plugin config-dir herdr-rich-preview).\n${tail}`,
+  )
 }
 
 /** OSC 8 hyperlink so the URL is Ctrl/Cmd-clickable in the (possibly local) terminal. */
