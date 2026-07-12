@@ -12,7 +12,7 @@ herdr plugin panes are terminals, so true diagram/HTML rendering can't happen in
 ## Install
 
 ```bash
-herdr plugin install <owner>/herdr-rich-preview
+herdr plugin install thanh-dong/herdr-rich-preview
 ```
 
 Bind a key in `~/.config/herdr/config.toml`:
